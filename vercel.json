@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd ci-cd_test && npm run build",
-  "outputDirectory": "ci-cd_test/.next",
-  "installCommand": "cd ci-cd_test && npm install"
-}
