@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
+// Import placeholder component
+const PlaceholderComponent = dynamic(() => import('../../components/user-generated/placeholder'), {
+  ssr: false
+});
+
 export default function ShowcasePage() {
   const [userComponents, setUserComponents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,17 +18,18 @@ export default function ShowcasePage() {
 
   const loadUserComponents = async () => {
     try {
-      // In a real implementation, you'd fetch the list of user components
-      // For now, we'll simulate some components
-      const mockComponents = [
-        { name: 'hero-section-1643123456', displayName: 'Custom Hero by John' },
-        { name: 'feature-card-1643123789', displayName: 'Feature Card by Sarah' },
-        { name: 'call-to-action-1643124000', displayName: 'CTA by Mike' }
-      ];
-      
-      setUserComponents(mockComponents);
+      // Try to fetch user components from API
+      const response = await fetch('/api/user-components');
+      if (response.ok) {
+        const components = await response.json();
+        setUserComponents(components);
+      } else {
+        // Fallback to empty array if API not available
+        setUserComponents([]);
+      }
     } catch (error) {
-      console.error('Error loading user components:', error);
+      console.log('No user components available yet');
+      setUserComponents([]);
     } finally {
       setLoading(false);
     }
@@ -33,17 +39,19 @@ export default function ShowcasePage() {
     try {
       // Dynamically import user-generated components
       const UserComponent = dynamic(
-        () => import(`../components/user-generated/${componentName}`),
+        () => import(`../../components/user-generated/${componentName}`).catch(() => 
+          import('../../components/user-generated/placeholder')
+        ),
         { 
-          loading: () => <div className="animate-pulse bg-gray-200 h-32 rounded-lg"></div>,
+          loading: () => <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-32 rounded-lg"></div>,
           ssr: false 
         }
       );
       return <UserComponent />;
     } catch (error) {
       return (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">Error loading component: {componentName}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+          <p className="text-red-600 dark:text-red-400">Error loading component: {componentName}</p>
         </div>
       );
     }
@@ -51,10 +59,10 @@ export default function ShowcasePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading user components...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading showcase...</p>
         </div>
       </div>
     );
@@ -65,55 +73,104 @@ export default function ShowcasePage() {
       <div className="max-w-6xl mx-auto py-12 px-4">
         <header className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            User-Generated Components Showcase
+            Component Showcase
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300">
-            Components created by the community and deployed via CI/CD
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Components created by users and deployed automatically via CI/CD pipeline
           </p>
+          <div className="mt-6">
+            <a 
+              href="/builder" 
+              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              🚀 Create Your Component
+            </a>
+          </div>
         </header>
 
         {userComponents.length === 0 ? (
-          <div className="text-center bg-white dark:bg-gray-800 rounded-lg p-12 shadow-lg">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              No Components Yet
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Be the first to create a component using our live builder!
-            </p>
-            <a 
-              href="/builder" 
-              className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-            >
-              Create Component
-            </a>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-12 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+                No User Components Yet
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Be the first to create a component using our live builder!
+              </p>
+            </div>
+            
+            {/* Show placeholder component */}
+            <PlaceholderComponent />
+            
+            <div className="text-center mt-8">
+              <a 
+                href="/builder" 
+                className="inline-flex items-center px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                🎨 Start Building
+              </a>
+            </div>
           </div>
         ) : (
           <div className="space-y-8">
             {userComponents.map((component, index) => (
-              <div key={component.name} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-                <div className="bg-gray-100 dark:bg-gray-700 px-6 py-3 border-b">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {component.displayName}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Component ID: {component.name}
-                  </p>
+              <div key={component.name} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div className="bg-gray-100 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                        {component.displayName || `Component ${index + 1}`}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Component ID: {component.name}
+                      </p>
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Created: {component.createdAt || 'Unknown'}
+                    </div>
+                  </div>
                 </div>
                 <div className="p-6">
                   {renderUserComponent(component.name)}
                 </div>
               </div>
             ))}
+            
+            <div className="text-center">
+              <a 
+                href="/builder" 
+                className="inline-flex items-center px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                ➕ Add Another Component
+              </a>
+            </div>
           </div>
         )}
 
-        <div className="mt-12 text-center">
-          <a 
-            href="/builder" 
-            className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-          >
-            Add Your Component
-          </a>
+        {/* Info Section */}
+        <div className="mt-16 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-8 border border-blue-200 dark:border-blue-700">
+          <div className="text-center">
+            <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-4">
+              How It Works
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+              <div className="text-blue-800 dark:text-blue-200">
+                <div className="text-2xl mb-2">🎨</div>
+                <strong>1. Create</strong><br />
+                Use the builder to design your component
+              </div>
+              <div className="text-blue-800 dark:text-blue-200">
+                <div className="text-2xl mb-2">🚀</div>
+                <strong>2. Deploy</strong><br />
+                Automatically commits to GitHub
+              </div>
+              <div className="text-blue-800 dark:text-blue-200">
+                <div className="text-2xl mb-2">🌐</div>
+                <strong>3. Live</strong><br />
+                Appears here instantly via CI/CD
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
