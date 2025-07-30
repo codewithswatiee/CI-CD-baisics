@@ -1,13 +1,18 @@
 {
-  "name": "ci-cd_test",
-  "version": "0.1.0",
+  "name": "ci-cd-component-builder",
+  "version": "1.0.0",
+  "description": "CI/CD Pipeline Demo with Live Component Builder",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
   },
+  "keywords": ["ci-cd", "nextjs", "github-actions", "vercel", "component-builder"],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
     "next": "15.4.5",
     "next-auth": "^4.24.11",
